@@ -1,0 +1,30 @@
+version: '3.7'
+
+services:
+  bot:
+    image: "${BOT_IMAGE_NAME:-tg_bot-image}"
+    container_name: "${BOT_CONTAINER_NAME:-tg_bot-container}"
+    working_dir: "/usr/src/app/${BOT_NAME:-tg_bot}"
+    volumes:
+    - .:/usr/src/app/${BOT_NAME:-tg_bot}
+    command: python bot.py
+    restart: always
+    stop_signal: SIGINT
+    build:
+      context: .
+    env_file:
+      - ".env"
+  redis:
+    image: redis:6.2-alpine
+    restart: always
+    expose:
+      - 6379
+    command: redis-server --save 20 1 --loglevel warning
+    volumes: 
+      - redis:/data
+
+networks:
+  overlay:
+
+volumes:
+  redis:
