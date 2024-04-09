@@ -1,0 +1,9 @@
+{
+  "prerun": "# some code here",
+  "directory": "migrations",
+  "history": "migratehistory",
+  "models": [
+    "tgbot.models.models.User",
+    "tgbot.models.models.ActivationCode"
+  ]
+}
