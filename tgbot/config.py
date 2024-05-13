@@ -20,9 +20,9 @@ class TgBot:
 
 
 @dataclass
-class OpenAI:
+class Google:
     token: str
-    gpt_model: str
+    model: str
 
 
 @dataclass
@@ -49,7 +49,7 @@ class Config:
     misc: Miscellaneous
     redis: Redis
     pyrogram: PyrogramConfig
-    openai: OpenAI
+    google: Google
 
 
 def load_config(path: str = None):
@@ -78,8 +78,8 @@ def load_config(path: str = None):
             api_id=env.int("API_ID"),
             api_hash=env.str("API_HASH")
         ),
-        openai=OpenAI(
-            token=env.str("CHAT_GPT_KEY"),
-            gpt_model=env.str("GPT_MODEL")
+        google=Google(
+            token=env.str("GOOGLE_API_KEY"),
+            model=env.str("GOOGLE_MODEL")
         )
     )

@@ -4,6 +4,8 @@
   "history": "migratehistory",
   "models": [
     "tgbot.models.models.User",
-    "tgbot.models.models.ActivationCode"
+    "tgbot.models.models.ActivationCode",
+    "tgbot.models.models.TelegramMessage",
+    "tgbot.models.models.Chat"
   ]
 }

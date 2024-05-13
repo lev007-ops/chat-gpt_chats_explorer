@@ -26,6 +26,21 @@ class ActivationCode(BaseModel):
 
 
 class User(BaseModel):
-    telegram_id = pw.IntegerField(unique=True)
+    telegram_id = pw.BigIntegerField(unique=True)
     phone = pw.CharField(max_length=20, unique=True)
     session_string = pw.CharField(max_length=500, null=True)
+
+
+class Chat(BaseModel):
+    chat_id = pw.BigIntegerField()
+    user = pw.ForeignKeyField(User)
+
+
+class TelegramMessage(BaseModel):
+    chat = pw.ForeignKeyField(Chat)
+    user_parse = pw.ForeignKeyField(User)
+    from_user_id = pw.BigIntegerField(null=True)
+    username = pw.CharField(max_length=200)
+    datetime = pw.DateTimeField("%Y-%m-%d")
+    text = pw.TextField(null=True)
+    message_id = pw.IntegerField()

@@ -9,6 +9,9 @@ from tgbot.config import load_config
 from pyrogram.errors import RPCError, SessionPasswordNeeded, PasswordHashInvalid
 from aiogram import types
 from tgbot.keyboards.inline import get_code_keyboard
+from aiogram.filters import Command
+import asyncio
+from tgbot.handlers.pyrogram_handlers import get_message_handler
 
 
 registration_router = Router()
@@ -45,7 +48,6 @@ async def login(
                               phone_code=code)
             to_return = {"status": "OK",
                          "client": app}
-            await app.disconnect()
     except SessionPasswordNeeded:
         if password:
             try:
@@ -54,7 +56,6 @@ async def login(
                 await app.sign_in(phone, phone_hash, code)
                 to_return = {"status": "OK",
                              "client": app}
-                await app.disconnect()
             except PasswordHashInvalid:
                 to_return = {
                     "status": "INVALID_PASSWORD",
@@ -74,7 +75,12 @@ async def login(
     return to_return
 
 
+@registration_router.message(Command("register"))
 async def registration(message: Message, state: FSMContext):
+    user = User.get_or_none(telegram_id=message.from_user.id)
+    if user is not None:
+        await activation_key(message, state)
+        return
     await message.answer(
         "Привет, введи ключ активации, который тебе выдал администратор")
     await state.set_state(Registration.waiting_for_activation_key)
@@ -83,14 +89,16 @@ async def registration(message: Message, state: FSMContext):
 @registration_router.message(
     Registration.waiting_for_activation_key)
 async def activation_key(message: Message, state: FSMContext):
-    activation_key = message.text
-    code = ActivationCode.get_or_none(code=activation_key,
-                                      is_used=False)
-    if code is None:
-        await message.answer(
-            "Ключ активации не найден или уже был использован")
-        return
-    await state.update_data(activation_code=code)
+    user = User.get_or_none(telegram_id=message.from_user.id)
+    if user is None:
+        activation_key = message.text
+        code = ActivationCode.get_or_none(code=activation_key,
+                                          is_used=False)
+        if code is None:
+            await message.answer(
+                "Ключ активации не найден или уже был использован")
+            return
+        await state.update_data(activation_code=code)
     phone_keyboard = ReplyKeyboardMarkup(resize_keyboard=True,
                                          one_time_keyboard=True,
                                          keyboard=[
@@ -137,23 +145,47 @@ async def phone_number(message: Message, state: FSMContext):
             "Что то пошло не так, попробуйте ещё раз: /start")
 
 
+async def run_pyrogram_client(client: Client):
+    await client.start()
+    me = await client.get_me()
+    print(f"Client {me.id} has been started")
+
+
 async def create_user(client: Client, activation_code: ActivationCode,
                       phone_number: str):
     try:
-        await client.connect()
         me = await client.get_me()
         user_id = me.id
         session_string = await client.export_session_string()
         await client.disconnect()
+        user = User.get_or_none(telegram_id=user_id)
+        if user is not None:
+            user.session_string = session_string
+            user.save()
+            return user
         activation_code.is_used = True
         activation_code.save()
         user = User.create(
             telegram_id=user_id,
-            phone_number=phone_number,
+            phone=phone_number,
             session_string=session_string
         )
+        handler = get_message_handler()
+        client = Client(
+                    name=f"user_{user.telegram_id}",
+                    session_string=user.session_string,
+                    in_memory=True,
+                    device_model="ChatsExplorer"
+                )
+        client.add_handler(handler)
+        
+        loop = asyncio.get_event_loop()
+        task = loop.create_task(run_pyrogram_client(client))
+        await task
+        
         return user
-    except RPCError:
+    except RPCError as e:
+        print(e)
         return None
 
 
@@ -226,7 +258,6 @@ async def password(message: Message, state: FSMContext):
     password = message.text
     await state.update_data(password=password)
     data = await state.get_data()
-    activation_code = data.get("activation_code")
     phone_number = data.get("phone_number")
     phone_code = data.get("phone_code")
     phone_hash = data.get("phone_hash")
