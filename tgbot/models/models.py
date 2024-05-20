@@ -34,6 +34,7 @@ class User(BaseModel):
 class Chat(BaseModel):
     chat_id = pw.BigIntegerField()
     user = pw.ForeignKeyField(User)
+    title = pw.CharField(max_length=500)
 
 
 class TelegramMessage(BaseModel):

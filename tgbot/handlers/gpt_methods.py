@@ -43,12 +43,21 @@ async def generate_content(prompt: str, api_key: str, context: List[Dict[str, st
     }
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=headers, data=json.dumps(data)) as resp:
-            resp_json = await resp.json()
-            error = resp_json.get("error")
-            if error:
-                raise ValueError(f"Error: {error}")
-            return resp_json["candidates"][0]["content"]["parts"][0]["text"]
+        try:
+            async with session.post(url, headers=headers, data=json.dumps(data)) as resp:
+                resp_json = await resp.json()
+                error = resp_json.get("error")
+                if error:
+                    raise ValueError(f"Error: {error}")
+                return resp_json["candidates"][0]["content"]["parts"][0]["text"]
+        except Exception as e:
+            async with session.post(url, headers=headers, data=json.dumps(data)) as resp:
+                resp_json = await resp.json()
+                error = resp_json.get("error")
+                if error:
+                    raise ValueError(f"Error: {error}")
+                return resp_json["candidates"][0]["content"]["parts"][0]["text"]
+            
 
 
 async def get_chat_and_dates(chats_list, search) -> DatesAnswer:

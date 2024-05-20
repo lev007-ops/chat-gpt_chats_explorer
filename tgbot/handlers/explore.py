@@ -32,7 +32,8 @@ async def input_chat(message: Message, state: FSMContext):
 
 
 async def parse_chat(chat: TGChat, user: User,
-                     message: Message, client: Client):
+                     message: Message, client: Client,
+                     title: str):
     try:
         await client.connect()
     except Exception as e:
@@ -42,8 +43,10 @@ async def parse_chat(chat: TGChat, user: User,
     if db_chat:
         await message.answer("Этот чат уже добавлен")
         return
-    db_chat, _ = Chat.get_or_create(chat_id=chat.id,
-                                    user=user)
+    db_chat, _ = Chat.get_or_create(
+        chat_id=chat.id,
+        user=user,
+        title=title)
     async for message_p in client.get_chat_history(chat.id):
         message_p: PyrogramMessage
         message_datetime = message_p.date
@@ -182,21 +185,16 @@ async def select_chat_to_explain(message: Message, state: FSMContext):
     chats_text = "Ваши чаты:\n"
     chats_list = []
     for chat in chats:
-        c = await client.get_chat(chat.chat_id)
-        if c.title:
-            title = c.title
-        else:
-            title = (c.first_name + " " +
-                     (c.last_name if c.last_name is not None else ""))
-        chats_text += f"{title}\n"
-        chats_list.append({"id": chat.chat_id, "name": title})
+        chat: Chat
+        chats_text += f"{chat.title}\n"
+        chats_list.append({"id": chat.chat_id, "name": chat.title})
     try:
         await client.disconnect()
     except Exception as e:
         pass
     await state.update_data(chats_list=chats_list)
     keyboard = ReplyKeyboardRemove()
-    await message.answer(f"Введи примерное название чата. Поиск происходит только по чатам, добавленным через команду /add_chat\n{chats_text}", reply_markup=keyboard)
+    await message.answer(f"Введи примерное название чата. Поиск происходит только по чатам, добавленным через команду ```/add_chat```\n{chats_text}\n\n(Если название чата изменилось, отправьте в него команду ```!!update_chat``` и мы обновим его название)", reply_markup=keyboard, parse_mode="Markdown")
     await state.set_state(ExploreChat.input_dates)
 
 
@@ -232,15 +230,13 @@ async def input_dates(message: Message, state: FSMContext):
     except Exception as e:
         await message.answer(f"Неизвестная ошибка: {e}")
         return
-    chat = await client.get_chat(chat_id)
     try:
         await client.disconnect()
     except Exception as e:
         pass
-    title = (chat.first_name + " " +
-             (chat.last_name if chat.last_name is not None else ""))
+    chat = Chat.get(chat_id=chat_id, user=user)
     await message.answer(
-        f"Чат {title} найден, задайте вопрос", reply_markup=ReplyKeyboardRemove())
+        f"Чат {chat.title} найден, задайте вопрос", reply_markup=ReplyKeyboardRemove())
     await state.set_state(ExploreChat.explore_chat)
 
 

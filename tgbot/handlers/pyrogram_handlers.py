@@ -13,16 +13,28 @@ async def message_hand(client: Client, message: Message):
     user = User.get_or_none(User.telegram_id == me.id)
     if user is None:
         return
-    if message.text == "!!add_chat" and message.from_user.id == me.id:
+    username = message.chat.title
+    if not username:
+        username = (message.from_user.first_name + " " +
+                    (message.from_user.last_name if message.from_user.last_name is not None else ""))
+    if message.text in ["!!add_chat", "!!update_chat"] and message.from_user.id == me.id:
         m = message
         await message.delete()
         chat = Chat.get_or_none(Chat.user == user,
                                 Chat.chat_id == m.chat.id)
         config = load_config()
         bot = Bot(token=config.tg_bot.token)
+        if m.text == "!!update_chat":
+            if chat is None:
+                bot.send_message(me.id, "Чат не добавлен. Добавьте чат командой /add_chat")
+                return
+            chat.title = username
+            chat.save()
+            await bot.send_message(me.id, f"Чат {username} обновлен")
+            return
         if chat is None:
             m1 = await bot.send_message(me.id, "Начинаю добавление чата")
-            await parse_chat(m.chat, user, m1, client)
+            await parse_chat(m.chat, user, m1, client, username)
         else:
             await bot.send_message(me.id, "Чат уже добавлен")
         return
@@ -30,10 +42,6 @@ async def message_hand(client: Client, message: Message):
                             Chat.chat_id == message.chat.id)
     if chat is None:
         return
-    username = message.chat.title
-    if not username:
-        username = (message.from_user.first_name + " " +
-                 (message.from_user.last_name if message.from_user.last_name is not None else ""))
     my_id = me.id
     user = User.get_or_none(User.telegram_id == my_id)
     if user is None:

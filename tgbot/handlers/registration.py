@@ -12,6 +12,7 @@ from tgbot.keyboards.inline import get_code_keyboard
 from aiogram.filters import Command
 import asyncio
 from tgbot.handlers.pyrogram_handlers import get_message_handler
+from tgbot.handlers.start import start
 
 
 registration_router = Router()
@@ -178,12 +179,12 @@ async def create_user(client: Client, activation_code: ActivationCode,
                     device_model="ChatsExplorer"
                 )
         client.add_handler(handler)
-        
+
         loop = asyncio.get_event_loop()
         task = loop.create_task(run_pyrogram_client(client))
         await task
         
-        return user
+        await start()
     except RPCError as e:
         print(e)
         return None
@@ -217,6 +218,7 @@ async def process_callback_digit(
             await callback_query.answer("Успешное подключение к аккаунту",
                                         show_alert=True)
             await state.clear()
+            await start(callback_query.message, state)
             return
         elif login_result["status"] == "PASSWORD":
             text = "Введите пароль от своего аккаунта"
@@ -275,6 +277,7 @@ async def password(message: Message, state: FSMContext):
                           phone_number)
         await message.answer("Успешное подключение к аккаунту")
         await state.clear()
+        await start(message, state)
         return
     if login_result["status"] == "INVALID_PASSWORD":
         await message.answer("Неверный пароль, попробуйте ещё раз")
