@@ -62,3 +62,4 @@ RUN chown -R app:app $APP_HOME
 
 # change to the app user
 USER app
+RUN bash -c 'pem migrate'
