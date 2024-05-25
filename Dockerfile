@@ -25,7 +25,7 @@ RUN apk update \
 COPY ./requirements.txt .
 RUN pip install --upgrade pip
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
-RUN pip install psycopg2-binary
+RUN pip uninstall psycopg2 -y
 
 #########
 # FINAL #
@@ -62,5 +62,5 @@ RUN chown -R app:app $APP_HOME
 
 # change to the app user
 USER app
-
-RUN pem migrate
+RUN pip install psycopg2-binary
+RUN python3 -m pem migrate
