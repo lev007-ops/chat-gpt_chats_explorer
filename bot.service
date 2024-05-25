@@ -1,0 +1,12 @@
+[Unit]
+Description=TG bot
+After=network.target
+
+[Service]
+ExecStart=./start_bot.sh
+WorkingDirectory=/root/chat-gpt_chats_explorer  # your working directory
+User=root
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
