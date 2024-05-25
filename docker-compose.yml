@@ -7,7 +7,9 @@ services:
     working_dir: "/usr/src/app/${BOT_NAME:-tg_bot}"
     volumes:
     - .:/usr/src/app/${BOT_NAME:-tg_bot}
-    command: pem migrate
+    depends_on:
+      - redis
+      - postgres
     command: python bot.py
     restart: always
     stop_signal: SIGINT
