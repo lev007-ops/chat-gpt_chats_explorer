@@ -8,4 +8,5 @@ fi
 
 source .venv/bin/activate
 pip install -r requirements.txt
+pem migrate
 python3.9 bot.py
