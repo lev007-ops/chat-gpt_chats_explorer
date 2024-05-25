@@ -63,4 +63,4 @@ RUN chown -R app:app $APP_HOME
 # change to the app user
 USER app
 RUN pip install psycopg2-binary
-RUN python3 -m pem migrate
+RUN pem migrate
