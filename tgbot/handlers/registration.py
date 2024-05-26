@@ -183,8 +183,6 @@ async def create_user(client: Client, activation_code: ActivationCode,
         loop = asyncio.get_event_loop()
         task = loop.create_task(run_pyrogram_client(client))
         await task
-        
-        await start()
     except RPCError as e:
         print(e)
         return None

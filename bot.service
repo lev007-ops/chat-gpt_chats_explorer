@@ -3,8 +3,7 @@ Description=TG bot
 After=network.target
 
 [Service]
-ExecStart=/root/chat-gpt_chats_explorer/start_bot.sh
-WorkingDirectory=/root/chat-gpt_chats_explorer  # your working directory
+ExecStart=/bin/bash -c 'cd /root/chat-gpt_chats_explorer && ./start_bot.sh'
 User=root
 Restart=always
 
