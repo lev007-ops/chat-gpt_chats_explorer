@@ -209,6 +209,7 @@ async def process_callback_digit(
                                    code,
                                    phone_hash,
                                    client=client)
+        print(login_result)
         if login_result["status"] == "OK":
             await create_user(client,
                               data.get("activation_code"),
