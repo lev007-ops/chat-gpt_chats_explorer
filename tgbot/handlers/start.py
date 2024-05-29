@@ -17,5 +17,5 @@ async def start(message: Message, state: FSMContext):
         from tgbot.handlers.registration import registration
         await registration(message, state)
         return
-    await message.answer("Добро пожаловать\n/add_chat - добавить новый чат\n/explore - задать вопрос по чату")
+    await message.answer("Добро пожаловать\n/add_chat - добавить новый чат\n/explain - задать вопрос по чату")
     
