@@ -41,7 +41,7 @@ async def generate_content(prompt: str, api_key: str, context: List[Dict[str, st
     data = {
         "contents": contents
     }
-
+    print(1)
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, headers=headers, data=json.dumps(data)) as resp:
@@ -114,7 +114,7 @@ async def explain_chat(messages: List[Message],
     now = datetime.now().date().strftime("%Y-%m-%d")
     prompt = f"""Системный промт:
 
-# <Сегодня - {now}> 
+# <Сегодня - {now}>
 
 ## Ты Ассистент чата, ты читаешь переписку в чате и на только на основе информации из чата отвечаешь на вопросы и выполняешь задания. 
 ## Ты не выдумываешь ничего от себя, ты строго опираешься на информацию из чата. 
