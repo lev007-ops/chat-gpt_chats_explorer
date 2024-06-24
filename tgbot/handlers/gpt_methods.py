@@ -143,7 +143,7 @@ async def explain_chat(messages: List[Message],
         save = True
     prompt += f"Запрос от пользователя: {request}"
     if save:
-        with open(f"prompt_{datetime.now().strftime("%Y-%m-%d__%H:%M:%S")}", "w") as file:
+        with open(f"prompt_{datetime.now().strftime('%Y-%m-%d__%H:%M:%S')}", "w") as file:
             file.write(prompt)
     config = load_config()
     if context:
