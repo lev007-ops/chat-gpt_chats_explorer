@@ -137,7 +137,14 @@ async def explain_chat(messages: List[Message],
 # Данные для анализа:\n"""
     for message in messages:
         prompt += f"Дата: {message.datetime.strftime('%Y-%m-%d - %H:%M:%S')}, Текст: {message.text}, Пользователь: {message.user};\n"
+    save = False
+    if request.startswith("-p "):
+        request = request.replace("-p ", "")
+        save = True
     prompt += f"Запрос от пользователя: {request}"
+    if save:
+        with open(f"prompt_{datetime.now().strftime("&Y-%m-%d__%H:%M:%S")}", "w") as file:
+            file.write(prompt)
     config = load_config()
     if context:
         prompt = request

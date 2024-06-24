@@ -66,3 +66,4 @@ pgdata
 postgres
 redisdata
 .DS_Store
+prompt*
