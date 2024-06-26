@@ -184,17 +184,20 @@ async def select_chat_to_explain(message: Message, state: FSMContext):
         return
     chats_text = "Ваши чаты:\n"
     chats_list = []
+    number = 1
     for chat in chats:
         chat: Chat
-        chats_text += f"{chat.title}\n"
-        chats_list.append({"id": chat.chat_id, "name": chat.title})
+        chats_text += f"{number}. {chat.title}\n"
+        chats_list.append({"id": chat.chat_id, "name": chat.title,
+                           "number": number})
+        number += 1
     try:
         await client.disconnect()
     except Exception as e:
         pass
     await state.update_data(chats_list=chats_list)
     keyboard = ReplyKeyboardRemove()
-    await message.answer(f"Введи примерное название чата. Поиск происходит только по чатам, добавленным через команду ```/add_chat```\n{chats_text}\n\n(Если название чата изменилось, отправьте в него команду ```!!update_chat``` и мы обновим его название)", reply_markup=keyboard, parse_mode="Markdown")
+    await message.answer(f"Введи номер чата. Поиск происходит только по чатам, добавленным через команду ```/add_chat```\n{chats_text}\n\n(Если название чата изменилось, отправьте в него команду ```!!update_chat``` и мы обновим его название)", reply_markup=keyboard, parse_mode="Markdown")
     await state.set_state(ExploreChat.input_dates)
 
 
@@ -207,11 +210,16 @@ async def input_dates(message: Message, state: FSMContext):
     data = await state.get_data()
     chats_list = data.get("chats_list")
     try:
-        chat_id = await get_chat(chats_list, message.text)
+        chat_number = int(message.text)
     except ValueError:
         await message.answer(
-            "Что-то пошло не так, пожалуйста, попробуйте позже")
+            "Номер чата должен быть числом, попробуйте ещё раз")
         return
+    if chat_number < 1 or chat_number > len(chats_list):
+        await message.answer(
+            "Номер чата должен быть из списка, попробуйте ещё раз")
+        return
+    chat_id = chats_list[chat_number - 1]["id"]
     if chat_id == 0:
         await message.answer("Чат не найден, попробуйте другой запрос")
         return
