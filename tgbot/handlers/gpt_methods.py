@@ -139,7 +139,8 @@ async def explain_chat(messages: List[Message],
     config = load_config()
     if context:
         prompt = request
-    response, context = await generate_content(prompt, config.google.token, context)
+    response, context = await generate_content(prompt, config.google.token, context,
+                                               model_name="gemini-1.5-flash")
     return response, context
 
 
