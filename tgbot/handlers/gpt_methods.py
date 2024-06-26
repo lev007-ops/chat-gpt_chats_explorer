@@ -6,6 +6,7 @@ from typing import List, Dict
 import aiohttp
 import markdown
 import google.generativeai as genai
+from google.api_core.exceptions import ResourceExhausted
 import asyncio
 
 
@@ -50,8 +51,11 @@ async def generate_content(prompt: str, api_key: str, context = None, model_name
         chat_session = context
     else:
         chat_session = model.start_chat()
-
-    response = chat_session.send_message(prompt)
+    try:
+        response = chat_session.send_message(prompt)
+    except ResourceExhausted:
+        print("ResourceExhausted")
+        raise ValueError("ResourceExhausted")
     return response.text, chat_session
 
 async def get_chat_and_dates(chats_list, search) -> DatesAnswer:
