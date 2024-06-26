@@ -5,11 +5,13 @@ from dataclasses import dataclass
 from typing import List, Dict
 import aiohttp
 import markdown
+import google.generativeai as genai
 
 
 def to_markdown(text):
     text = text.replace('•', '  *')
-    text = markdown.markdown(text).replace('<p>', '').replace('</p>', '').replace('<ul>', '').replace('</ul>', '').replace('<li>', '').replace('</li>', '')
+    text = markdown.markdown(text).replace('<p>', '').replace(
+        '</p>', '').replace('<ul>', '').replace('</ul>', '').replace('<li>', '').replace('</li>', '')
     return text
 
 
@@ -27,41 +29,28 @@ class Message:
     user: str
 
 
-async def generate_content(prompt: str, api_key: str, context: List[Dict[str, str]] = None, model: str = "gemini-1.5-pro-latest") -> str:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key=" + api_key
-    headers = {'Content-Type': 'application/json'}
-    contents = []
-    if context:
-        for item in context:
-            contents.append({
-                "role": item["role"],
-                "parts": [{"text": item["content"]}]
-            })
-    contents.append({"role": "user", "parts": [{"text": prompt}]})
-    data = {
-        "contents": contents
+async def generate_content(prompt: str, api_key: str, context = None, model_name: str = "gemini-1.5-pro-latest"):
+    genai.configure(api_key=api_key)
+    generation_config = {
+        "temperature": 1,
+        "top_p": 0.95,
+        "top_k": 64,
+        "max_output_tokens": 8192,
+        "response_mime_type": "text/plain",
     }
-    print(1)
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(url, headers=headers, data=json.dumps(data)) as resp:
-                resp_json = await resp.json()
-                print(resp_json)
-                error = resp_json.get("error")
-                if error:
-                    raise ValueError(f"Error: {error}")
-                return resp_json["candidates"][0]["content"]["parts"][0]["text"]
-        except Exception as e:
-            async with session.post(url, headers=headers, data=json.dumps(data)) as resp:
-                resp_json = await resp.json()
-                error = resp_json.get("error")
-                
-                if error:
-                    print(resp_json)
-                    raise ValueError(f"Error: {error}")
-                return resp_json["candidates"][0]["content"]["parts"][0]["text"]
-            
+    model = genai.GenerativeModel(
+        model_name=model_name,
+        generation_config=generation_config,
+        # safety_settings = Adjust safety settings
+        # See https://ai.google.dev/gemini-api/docs/safety-settings
+    )
+    if context:
+        chat_session = context
+    else:
+        chat_session = model.start_chat()
 
+    response = chat_session.send_message(prompt)
+    return response.text, chat_session
 
 async def get_chat_and_dates(chats_list, search) -> DatesAnswer:
     now = datetime.now().date().strftime("%Y-%m-%d")
@@ -77,7 +66,7 @@ async def get_chat_and_dates(chats_list, search) -> DatesAnswer:
         prompt += f"ID: {chat['id']} - Название:{chat['name']}\n"
     prompt += f"Вот запрос пользователя: {search}"
     config = load_config()
-    response = await generate_content(prompt, config.google.token)
+    response, _ = await generate_content(prompt, config.google.token)
     str_json = response.replace("```json", "").replace("```", "")
     chat_data = json.loads(str_json)
     start_date = datetime.strptime(chat_data["start_date"], "%Y-%m-%d").date()
@@ -91,7 +80,7 @@ async def get_chat_and_dates(chats_list, search) -> DatesAnswer:
 
 
 async def get_chat(chats_list, search) -> int:
-    prompt = ("Пользователю надо выбрать чат, по примерному названию из спискаи указать его в формате json, если такого чата нету - укажи ID чата как 0, например:\n"
+    prompt = ("Пользователю надо выбрать чат, по примерному названию из списка и указать его в формате json, если такого чата нету - укажи ID чата как 0, например:\n"
               '''{
                   "chat_id": 4
               }\n'''
@@ -100,7 +89,7 @@ async def get_chat(chats_list, search) -> int:
         prompt += f"ID: {chat['id']} - Название:{chat['name']}\n"
     prompt += f"Вот запрос пользователя: {search}"
     config = load_config()
-    response = await generate_content(prompt, config.google.token)
+    response, _ = await generate_content(prompt, config.google.token)
     str_json = response.replace("```json", "").replace("```", "")
     chat_data = json.loads(str_json)
 
@@ -109,8 +98,8 @@ async def get_chat(chats_list, search) -> int:
 
 
 async def explain_chat(messages: List[Message],
-                       context: List[Dict[str, str]] = None,
-                       request: str = "") -> tuple[str, List[Dict[str, str]]]:
+                       context=None,
+                       request: str = ""):
     now = datetime.now().date().strftime("%Y-%m-%d")
     prompt = f"""Системный промт:
 
@@ -150,11 +139,7 @@ async def explain_chat(messages: List[Message],
     config = load_config()
     if context:
         prompt = request
-    response = await generate_content(prompt, config.google.token, context)
-    if not context:
-        context = []
-    context.append({"role": "user", "content": request})
-    context.append({"role": "model", "content": response})
+    response, context = await generate_content(prompt, config.google.token, context)
     return response, context
 
 
