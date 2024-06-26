@@ -142,6 +142,8 @@ async def explain_chat(messages: List[Message],
         request = request.replace("-p ", "")
         save = True
     prompt += f"Запрос от пользователя: {request}"
+    if context:
+        prompt = request
     if save:
         with open(f"prompt_{datetime.now().strftime('%Y-%m-%d__%H:%M:%S')}", "w") as file:
             file.write(prompt)
