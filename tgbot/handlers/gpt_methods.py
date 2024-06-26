@@ -6,6 +6,7 @@ from typing import List, Dict
 import aiohttp
 import markdown
 import google.generativeai as genai
+import asyncio
 
 
 def to_markdown(text):
@@ -30,6 +31,7 @@ class Message:
 
 
 async def generate_content(prompt: str, api_key: str, context = None, model_name: str = "gemini-1.5-pro-latest"):
+    await asyncio.sleep(65)
     genai.configure(api_key=api_key)
     generation_config = {
         "temperature": 1,
