@@ -31,8 +31,7 @@ class Message:
     user: str
 
 
-async def generate_content(prompt: str, api_key: str, context = None, model_name: str = "gemini-1.5-pro-latest"):
-    await asyncio.sleep(65)
+async def generate_content(prompt: str, api_key: str, context = None, model_name: str = "gemini-1.5-pro-latest", attempt: int = 1):
     genai.configure(api_key=api_key)
     generation_config = {
         "temperature": 1,
@@ -53,9 +52,12 @@ async def generate_content(prompt: str, api_key: str, context = None, model_name
         chat_session = model.start_chat()
     try:
         response = chat_session.send_message(prompt)
-    except ResourceExhausted:
-        print("ResourceExhausted")
-        raise ValueError("ResourceExhausted")
+    except Exception as e:
+        print(e)
+        if attempt > 5:
+            raise ValueError(e)
+        await generate_content(prompt, api_key, context, model_name, attempt+1)
+        return
     return response.text, chat_session
 
 async def get_chat_and_dates(chats_list, search) -> DatesAnswer:
