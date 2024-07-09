@@ -8,12 +8,15 @@ import markdown
 import google.generativeai as genai
 from google.api_core.exceptions import ResourceExhausted
 import asyncio
+import re
 
 
 def to_markdown(text):
     text = text.replace('•', '  *')
     text = markdown.markdown(text).replace('<p>', '').replace(
         '</p>', '').replace('<ul>', '').replace('</ul>', '').replace('<li>', '').replace('</li>', '')
+    pattern = r"<\/?h123456>"
+    text = re.sub(pattern, "", text)
     return text
 
 
@@ -134,7 +137,7 @@ async def explain_chat(messages: List[Message],
     prompt += """Формат ответа: В ответе выдай только ответ пользователю на его вопрос, сделанный на основе переписки из чата.
 
 ВАЖНО - Не строй предположений, пиши только на основе переписки из чата!
- 
+
 Если на ответ пользователя нет информации в чате так и напиши, если есть, выдай ответ на основе переписки из чата.
 
 Форматирование ответа: просто текст, как в Txt документе"""
