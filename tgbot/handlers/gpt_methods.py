@@ -17,6 +17,7 @@ def to_markdown(text):
         '</p>', '').replace('<ul>', '').replace('</ul>', '').replace('<li>', '').replace('</li>', '')
     pattern = r"<\/?h123456>"
     text = re.sub(pattern, "", text)
+    text = text.replace("<h2>", "").replace("</h2>", "").replace("<h3>", "").replace("</h3>", "").replace("<h4>", "").replace("</h4>", "").replace("<h5>", "").replace("</h5>", "").replace("<h6>", "").replace("</h6>", "").replace("<h1>", "").replace("</h1>", "")
     return text
 
 
