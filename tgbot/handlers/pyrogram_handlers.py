@@ -15,8 +15,8 @@ async def message_hand(client: Client, message: Message):
         return
     username = message.chat.title
     if not username:
-        username = (message.from_user.first_name + " " +
-                    (message.from_user.last_name if message.from_user.last_name is not None else ""))
+        username = (message.chat.first_name + " " +
+                    (message.chat.last_name if message.chat.last_name is not None else ""))
     if message.text in ["!!add_chat", "!!update_chat"] and message.from_user.id == me.id:
         m = message
         await message.delete()
