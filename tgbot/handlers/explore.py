@@ -269,9 +269,10 @@ async def explore_chat(message: Message, state: FSMContext):
     await message.answer("Сообщения получены, начинаю анализ")
     try:
         answer, context = await explain_chat(msgs, context, message.text)
-    except ValueError:
+    except ValueError as e:
         await message.answer(
-            "Что-то пошло не так, пожалуйста, попробуйте позже")
+            "Что-то пошло не так, пожалуйста, попробуйте позже\n"
+            f"Error: {e}")
         return
     answer = to_markdown(answer)
     if len(answer) > 4000:
