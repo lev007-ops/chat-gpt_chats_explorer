@@ -61,6 +61,7 @@ async def generate_content(prompt: str, api_key: str, context = None, model_name
         if attempt > 5:
             raise ValueError(e)
         await generate_content(prompt, api_key, context, model_name, attempt+1)
+        return e
     return response.text, chat_session
 
 async def get_chat_and_dates(chats_list, search) -> DatesAnswer:

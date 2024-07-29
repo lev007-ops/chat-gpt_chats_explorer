@@ -268,7 +268,10 @@ async def explore_chat(message: Message, state: FSMContext):
         msgs.append(Msg(datetime=m.datetime, text=m.text, user=m.username))
     await message.answer("Сообщения получены, начинаю анализ")
     try:
-        answer, context = await explain_chat(msgs, context, message.text)
+        answer_list = await explain_chat(msgs, context, message.text)
+        if len(answer_list) == 1:
+            raise ValueError(answer_list[0])
+        answer, context = answer_list
     except ValueError as e:
         await message.answer(
             "Что-то пошло не так, пожалуйста, попробуйте позже\n"
