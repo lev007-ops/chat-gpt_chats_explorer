@@ -44,7 +44,7 @@ async def message_hand(client: Client, message: Message):
         return
     my_id = me.id
     user = User.get_or_none(User.telegram_id == my_id)
-    if user is None:
+    if user is None or message.from_user is None:
         return
     m = TelegramMessage.create(
         chat=chat,
