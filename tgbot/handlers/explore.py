@@ -255,7 +255,7 @@ async def explore_chat(message: Message, state: FSMContext):
         return
     data = await state.get_data()
     chat_id = data.get("chat_id")
-    context = data.get("context", None)
+    context = data.get("context", [])
     await message.answer("Анализирую сообщения... Это может занять некоторое время")
     chat = Chat.get_or_none(chat_id=chat_id, user=user)
     if chat is None:

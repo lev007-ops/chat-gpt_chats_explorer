@@ -35,34 +35,30 @@ class Message:
     user: str
 
 
-async def generate_content(prompt: str, api_key: str, context = None, model_name: str = "gemini-1.5-pro-latest", attempt: int = 1):
-    genai.configure(api_key=api_key)
-    generation_config = {
-        "temperature": 1,
-        "top_p": 0.95,
-        "top_k": 64,
-        "max_output_tokens": 8192,
-        "response_mime_type": "text/plain",
-    }
-    model = genai.GenerativeModel(
-        model_name=model_name,
-        generation_config=generation_config,
-        # safety_settings = Adjust safety settings
-        # See https://ai.google.dev/gemini-api/docs/safety-settings
-    )
+async def generate_content(prompt: str, api_key: str, context: List[Dict[str, str]] = [], model_name: str = "gemini-1.5-pro-latest", attempt: int = 1):
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key=" + api_key
+    headers = {'Content-Type': 'application/json'}
+    contents = []
+    context.append({"role": "user", "content": prompt})
     if context:
-        chat_session = context
-    else:
-        chat_session = model.start_chat()
-    try:
-        response = chat_session.send_message(prompt)
-    except Exception as e:
-        print(e)
-        if attempt > 5:
-            raise ValueError(e)
-        await generate_content(prompt, api_key, context, model_name, attempt+1)
-        return e
-    return response.text, chat_session
+        for item in context:
+            contents.append({
+                "role": item["role"],
+                "parts": [{"text": item["content"]}]
+            })
+    data = {
+        "contents": contents
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, data=json.dumps(data)) as resp:
+            resp_json = await resp.json()
+            error = resp_json.get("error")
+            if error:
+                raise ValueError(f"Error: {error}")
+            ans = resp_json["candidates"][0]["content"]["parts"][0]["text"]
+            context.append({"role": "model", "content": ans})
+            return ans, context
 
 async def get_chat_and_dates(chats_list, search) -> DatesAnswer:
     now = datetime.now().date().strftime("%Y-%m-%d")
